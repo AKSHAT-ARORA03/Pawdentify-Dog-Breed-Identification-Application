@@ -157,10 +157,10 @@ test_images/
 user_uploads/
 
 # Model files (if they're too large for git)
-# Uncomment if model file is large
-# model/*.keras
-# model/*.h5
-# model/*.pb
+# Large model files - use Git LFS or cloud storage for production
+model/*.keras
+model/*.h5
+model/*.pb
 
 # Documentation build
 docs/_build/
