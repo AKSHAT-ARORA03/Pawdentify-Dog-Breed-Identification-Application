@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120">
+  <defs>
+    <linearGradient id="p" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#ffb3d9"/>
+      <stop offset="100%" stop-color="#ff7fbf"/>
+    </linearGradient>
+  </defs>
+  <!-- simple semi-realistic dog bust -->
+  <rect x="0" y="0" width="160" height="120" rx="14" fill="url(#p)"/>
+  <!-- ears -->
+  <path d="M40 42 q-14 -22 12 -24 6 0 12 6" fill="#fff0f6" stroke="#ffd6e8"/>
+  <path d="M120 42 q14 -22 -12 -24 -6 0 -12 6" fill="#fff0f6" stroke="#ffd6e8"/>
+  <!-- head -->
+  <ellipse cx="80" cy="66" rx="40" ry="34" fill="#fff"/>
+  <!-- eyes -->
+  <circle cx="66" cy="62" r="4" fill="#5c2941"/>
+  <circle cx="94" cy="62" r="4" fill="#5c2941"/>
+  <!-- snout -->
+  <ellipse cx="80" cy="76" rx="22" ry="14" fill="#ffe8f4"/>
+  <circle cx="80" cy="74" r="4" fill="#5c2941"/>
+  <path d="M68 80 Q80 86 92 80" fill="none" stroke="#5c2941" stroke-width="2" stroke-linecap="round"/>
+</svg>
+
+
