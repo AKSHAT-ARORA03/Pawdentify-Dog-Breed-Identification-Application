@@ -5,6 +5,7 @@ tensorflow
 pillow
 numpy
 python-multipart
+requests
 
 # MongoDB dependencies
 motor>=3.3.0

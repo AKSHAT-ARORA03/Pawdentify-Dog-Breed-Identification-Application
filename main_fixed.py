@@ -73,11 +73,27 @@ print("✅ Added preferences endpoints")
 # Load model with fallback options - SIMPLIFIED APPROACH
 # -------------------------------
 def load_model_with_fallbacks():
-    model_paths = ["model/final_model.keras"]
+    # Try to download model if it doesn't exist
+    try:
+        from model_downloader import download_model_if_missing
+        print("🔄 Checking if model needs to be downloaded...")
+        model_path = download_model_if_missing()
+        if model_path:
+            model_paths = [model_path]
+        else:
+            model_paths = ["model/final_model.keras"]
+    except ImportError:
+        print("⚠️ Model downloader not available, using local paths only")
+        model_paths = ["model/final_model.keras"]
     
     for model_path in model_paths:
         try:
             print(f"🔄 Attempting to load model: {model_path}")
+            
+            # Check if file exists
+            if not os.path.exists(model_path):
+                print(f"❌ Model file not found: {model_path}")
+                continue
             
             # Try to load just the core model without augmentation layers
             try:
