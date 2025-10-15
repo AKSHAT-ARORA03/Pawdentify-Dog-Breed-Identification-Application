@@ -87,7 +87,9 @@ def download_model_if_missing():
     model_urls = [
         # Environment variable for custom model URL
         os.getenv("MODEL_DOWNLOAD_URL"),
-        # GitHub Release (update after creating release)
+        # Google Drive (Primary source)
+        "https://drive.google.com/uc?export=download&id=101KghIYW90c6VFpNGWFW_TM4jjivLHJe",
+        # GitHub Release (Secondary source)
         "https://github.com/AKSHAT-ARORA03/PAWDENTIFY-AI-Powered-Dog-Breed-Recognition-System/releases/download/v1.0/final_model.keras",
         # Backup URLs can be added here
     ]

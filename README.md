@@ -1195,6 +1195,24 @@ This project is configured for deployment on **Render** (backend) and **Vercel**
 - MongoDB Atlas cluster
 - Clerk application configured
 
+#### 🤖 AI Model Availability
+The trained model file (`final_model.keras` - 119MB) is available from multiple sources:
+
+**📥 Download Sources:**
+1. **GitHub Releases**: [Download v1.0](https://github.com/AKSHAT-ARORA03/PAWDENTIFY-AI-Powered-Dog-Breed-Recognition-System/releases/tag/v1.0)
+2. **Google Drive**: [Direct Download](https://drive.google.com/uc?export=download&id=101KghIYW90c6VFpNGWFW_TM4jjivLHJe)
+
+**🚀 Automatic Deployment:**
+- ✅ Backend automatically downloads model during startup
+- ✅ No manual model upload required for Render deployment
+- ✅ Multiple fallback download sources configured
+- ✅ Creates dummy model for testing if all downloads fail
+
+**💡 How It Works:**
+```bash
+Render Deploy → Install Dependencies → Auto-Download Model → Start Server → Ready! 🎉
+```
+
 ---
 
 ### 🔧 Backend Deployment (Render)

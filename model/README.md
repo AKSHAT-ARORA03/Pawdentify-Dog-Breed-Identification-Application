@@ -15,9 +15,14 @@ The model is tracked with Git LFS. To download it:
 git lfs pull
 ```
 
-### Option 2: Cloud Storage (Recommended for Production)
+### Option 2: Direct Download (Recommended for Production)
+**Available Download Sources:**
+1. **Google Drive**: [Direct Download](https://drive.google.com/uc?export=download&id=101KghIYW90c6VFpNGWFW_TM4jjivLHJe)
+2. **GitHub Releases**: [Download v1.0](https://github.com/AKSHAT-ARORA03/PAWDENTIFY-AI-Powered-Dog-Breed-Recognition-System/releases/tag/v1.0)
+
+### Option 3: Cloud Storage (Alternative for Production)
 For production deployment, consider storing the model in:
-- **Google Drive**: Upload and use direct download link
+- **Google Drive**: Upload and use direct download link ✅ **CONFIGURED**
 - **AWS S3**: Store in S3 bucket with public access
 - **Azure Blob Storage**: Use Azure storage for model hosting
 - **Hugging Face Model Hub**: Upload to model repository
