@@ -3,12 +3,13 @@
  * Handles all communication with the backend MongoDB API
  */
 
-// API Configuration
-const API_BASE = 'http://localhost:8000';
+// API Configuration - Use environment variable or fallback to localhost for development
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
 
 class ApiService {
   constructor() {
     this.baseUrl = API_BASE
+    console.log('🔗 API Base URL:', this.baseUrl) // Debug log
     this.apiAvailable = true // Track if API is available
   }
 
