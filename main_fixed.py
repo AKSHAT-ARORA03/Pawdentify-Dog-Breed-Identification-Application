@@ -34,7 +34,8 @@ app = FastAPI(
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 ALLOWED_ORIGINS = [
     FRONTEND_URL,
-    "https://pawdentify.vercel.app",  # Your Vercel domain
+    "https://pawdentify.vercel.app",  # Your custom Vercel domain
+    "https://pawdentify-ai-powered-dog-breed-rec-coral.vercel.app",  # Actual Vercel deployment
     "https://*.vercel.app",  # Vercel preview deployments
     "http://localhost:5173",  # Local development
     "http://localhost:3000",  # Alternative local port
