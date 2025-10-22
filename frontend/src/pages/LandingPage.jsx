@@ -53,7 +53,7 @@ export default function LandingPage() {
     {
       name: 'Sarah Johnson',
       role: 'Dog Rescuer',
-      content: 'Pawdentify has been incredible for identifying rescue dogs. The accuracy is amazing!',
+      content: 'The Model has been incredible for identifying rescue dogs. The accuracy is amazing!',
       rating: 5
     },
     {
@@ -144,7 +144,7 @@ export default function LandingPage() {
               <h1 className="text-4xl lg:text-6xl font-bold font-display text-gray-900 mb-6">
                 Know your dog with{' '}
                 <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-                  Pawdentify
+                  Breed Detection Model
                 </span>
               </h1>
               
@@ -244,7 +244,7 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold font-display text-gray-900 mb-6">
-              Why Choose Pawdentify?
+              Why Choose our Model?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Our advanced AI technology provides the most accurate and comprehensive 
@@ -292,7 +292,7 @@ export default function LandingPage() {
               Loved by Dog Owners Everywhere
             </h2>
             <p className="text-xl text-gray-600">
-              See what our community has to say about Pawdentify
+              See what our community has to say about their experience with our breed detection model.
             </p>
           </motion.div>
 
@@ -335,7 +335,7 @@ export default function LandingPage() {
               Ready to Discover Your Dog's Breed?
             </h2>
             <p className="text-xl text-primary-100 mb-8">
-              Join thousands of dog owners who trust Pawdentify for accurate breed identification
+              Join thousands of dog owners who trust our model for accurate breed identification
             </p>
             
             {renderCTAButton(false)}
