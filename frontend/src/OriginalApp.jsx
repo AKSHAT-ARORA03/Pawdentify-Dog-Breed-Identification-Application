@@ -103,7 +103,7 @@ export default function OriginalApp(){
         <div className="header-inner">
           <div className="brand">
             <img src={logoUrl} className="brand-logo" alt="Pawdentify" />
-            <span className="brand-name">Pawdentify</span>
+            <span className="brand-name">Dog Breed Identification</span>
           </div>
           <div className="header-actions">
             <button className="link" onClick={onHome}>Home</button>
@@ -115,9 +115,9 @@ export default function OriginalApp(){
       <main>
         <section className="hero">
           <div>
-            <h1>Know your dog with Pawdentify</h1>
+            <h1>Know your dog with Breed Identification Model</h1>
             <p>
-              Pawdentify uses advanced deep learning to recognize dog breeds from photos.
+              Our Model uses advanced deep learning to recognize dog breeds from photos.
               Simple, fast, and accurate — perfect for pet parents and dog lovers.
             </p>
             <div className="cta">
@@ -198,7 +198,7 @@ export default function OriginalApp(){
         </section>
       </main>
 
-      <footer className="footer">© {new Date().getFullYear()} Pawdentify</footer>
+      <footer className="footer">© {new Date().getFullYear()} Dog Breed Identification</footer>
     </div>
   )
 }
