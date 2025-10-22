@@ -103,7 +103,7 @@ export default function App(){
         <div className="header-inner">
           <div className="brand">
             <img src={logoUrl} className="brand-logo" alt="Pawdentify" />
-            <span className="brand-name">Pawdentify</span>
+            <span className="brand-name"></span>
           </div>
           <div className="header-actions">
             <button className="link" onClick={onHome}>Home</button>
@@ -115,7 +115,7 @@ export default function App(){
       <main>
         <section className="hero">
           <div>
-            <h1>Know your dog with Pawdentify</h1>
+            <h1>Know your dog with Breed Detection Model</h1>
             <p>
               Pawdentify uses advanced deep learning to recognize dog breeds from photos.
               Simple, fast, and accurate — perfect for pet parents and dog lovers.
