@@ -181,7 +181,7 @@ export default function Dashboard() {
                 Welcome back, {user?.firstName || 'User'}!
               </h1>
               <p className="text-lg text-gray-600 mt-2">
-                Here's your Pawdentify activity overview
+                Here's your activity overview
               </p>
             </div>
             <Link
