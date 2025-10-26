@@ -51,7 +51,7 @@ export default function HelpSupport() {
     {
       id: 1,
       category: 'getting-started',
-      question: 'How do I start using PAWDENTIFY?',
+      question: 'How do I start using Dog Breed Identifier?',
       answer: 'Getting started is easy! Simply sign up for a free account, then navigate to the scan page and upload a photo of your dog. Our AI will analyze the image and provide breed identification results within seconds.'
     },
     {
@@ -99,8 +99,8 @@ export default function HelpSupport() {
     {
       id: 9,
       category: 'getting-started',
-      question: 'Is PAWDENTIFY really free to use?',
-      answer: 'Yes! PAWDENTIFY is completely free to use. You can scan unlimited photos, save results, and access all features without any charges or hidden fees.'
+      question: 'Is Dog Breed Identifier really free to use?',
+      answer: 'Yes! Dog Breed Identifier is completely free to use. You can scan unlimited photos, save results, and access all features without any charges or hidden fees.'
     },
     {
       id: 10,
@@ -212,7 +212,7 @@ export default function HelpSupport() {
             Help & Support Center
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Get the help you need to make the most of PAWDENTIFY. Search our knowledge base, 
+            Get the help you need to make the most of Dog Breed Identifier. Search our knowledge base,
             browse FAQs, or contact our support team.
           </p>
         </motion.div>
@@ -263,12 +263,13 @@ export default function HelpSupport() {
                   Call Support
                 </a>
                 <a
-                  href="mailto:support@pawdentify.com"
-                  className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:border-blue-300 hover:text-blue-600 transition-colors"
+                  href="mailto:support-awbi@gov.in"
+                   className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:border-blue-300 hover:text-blue-600 transition-colors"
                 >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email Us
-                </a>
+                <Mail className="w-4 h-4 mr-2" />
+                     Email Animal Welfare (AWBI)
+                 </a>
+
               </div>
             </div>
 

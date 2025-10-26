@@ -1239,7 +1239,7 @@ class ApiService {
         ...feedbackData, 
         user_id: userId,
         submitted_at: new Date().toISOString(),
-        is_approved: false
+        is_approved: true // Direct approval - no moderation needed
       }
     }
 

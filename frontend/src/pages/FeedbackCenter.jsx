@@ -122,24 +122,26 @@ export default function FeedbackCenter() {
 
       await apiService.submitFeedback(feedbackData, user.id);
       
-      // If rating is 4 or 5 stars, also submit as community testimonial
-      if (overallRating >= 4) {
+      // Always submit as community testimonial (no approval needed)
+      if (overallRating >= 1) {
         try {
           const testimonialData = {
             display_name: user?.firstName ? `${user.firstName} ${user.lastName?.charAt(0)}.` : `User ${user?.username?.substring(0,5)}`,
-            user_location: null, // Could be added later
+            user_location: null,
             title: feedbackForm.title,
             content: feedbackForm.description,
             rating: overallRating,
-            usage_duration: null, // Could be calculated based on account age
-            favorite_features: [], // Could be inferred from feedback type
-            scan_count: null, // Could be retrieved from user stats
-            is_approved: false, // Will be moderated
-            is_featured: overallRating === 5 // 5-star reviews can be featured
+            usage_duration: null,
+            favorite_features: [],
+            scan_count: null,
+            is_approved: true, // Directly approved - no moderation
+            is_featured: overallRating === 5,
+            helpful_votes: 0,
+            submitted_at: new Date().toISOString()
           };
           
           await apiService.submitCommunityFeedback(testimonialData, user.id);
-          console.log('✅ High-rated feedback also submitted as community testimonial');
+          console.log('✅ Feedback submitted as community testimonial');
         } catch (testimonialError) {
           console.error('⚠️ Failed to submit as testimonial:', testimonialError);
           // Don't fail the whole submission if testimonial fails
@@ -148,7 +150,7 @@ export default function FeedbackCenter() {
       
       setSubmitStatus({ 
         type: 'success', 
-        message: 'Thank you! Your feedback has been submitted successfully.' 
+        message: 'Thank you! Your feedback has been submitted and will appear in the community testimonials.' 
       });
       
       // Reset form
@@ -156,8 +158,11 @@ export default function FeedbackCenter() {
       setOverallRating(0);
       setFeatureRatings({ scanning: 0, accuracy: 0, interface: 0, speed: 0 });
       
-      // Reload user feedback data
+      // Reload user feedback data and switch to community tab to show the new testimonial
       await loadFeedbackData();
+      setTimeout(() => {
+        setActiveTab('community'); // Switch to community tab to show the new testimonial
+      }, 1500); // Give user time to read the success message
       
     } catch (err) {
       console.error('Error submitting feedback:', err);
@@ -179,11 +184,19 @@ export default function FeedbackCenter() {
     setLoading(true);
     
     try {
-      await apiService.submitCommunityFeedback(testimonialData, user.id);
+      // Add direct approval and timestamp
+      const processedTestimonialData = {
+        ...testimonialData,
+        is_approved: true, // No moderation - direct approval
+        submitted_at: new Date().toISOString(),
+        helpful_votes: 0
+      };
+      
+      await apiService.submitCommunityFeedback(processedTestimonialData, user.id);
       
       setSubmitStatus({ 
         type: 'success', 
-        message: 'Thank you! Your testimonial has been submitted for review.' 
+        message: 'Thank you! Your testimonial has been posted to the community.' 
       });
       
       // Reload community feedback data
