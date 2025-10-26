@@ -77,11 +77,14 @@ export default function FeedbackCenter() {
         apiService.getUserCommunityFeedback(user.id)
       ]);
 
-      setTestimonials(testimonialData);
+      // If no testimonials from API but we have community feedback, use community feedback as testimonials
+      const effectiveTestimonials = testimonialData.length > 0 ? testimonialData : communityData;
+
+      setTestimonials(effectiveTestimonials);
       setUserFeedback(userFeedbackData);
       setCommunityFeedback(communityData);
       
-      console.log('📊 Loaded testimonials:', testimonialData.length);
+      console.log('📊 Loaded testimonials:', effectiveTestimonials.length);
       console.log('📝 Loaded user feedback:', userFeedbackData.length);
       console.log('💬 Loaded community feedback:', communityData.length);
       

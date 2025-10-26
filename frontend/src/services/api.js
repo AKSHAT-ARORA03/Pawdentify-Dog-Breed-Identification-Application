@@ -1233,14 +1233,28 @@ class ApiService {
    */
   async submitCommunityFeedback(feedbackData, userId) {
     if (!this.apiAvailable) {
-      console.log('⚠️ API not available, using mock community feedback submission')
-      return { 
+      console.log('⚠️ API not available, storing community feedback locally')
+      
+      const localFeedback = { 
         _id: `community_feedback_${Date.now()}`, 
         ...feedbackData, 
         user_id: userId,
         submitted_at: new Date().toISOString(),
         is_approved: true // Direct approval - no moderation needed
+      };
+      
+      // Store in localStorage
+      try {
+        const existingFeedback = localStorage.getItem(`community_feedback_${userId}`);
+        const feedbackArray = existingFeedback ? JSON.parse(existingFeedback) : [];
+        feedbackArray.unshift(localFeedback); // Add to beginning
+        localStorage.setItem(`community_feedback_${userId}`, JSON.stringify(feedbackArray));
+        console.log('✅ Community feedback stored locally');
+      } catch (error) {
+        console.error('Failed to store feedback locally:', error);
       }
+      
+      return localFeedback;
     }
 
     try {
@@ -1266,8 +1280,22 @@ class ApiService {
 
   async getTestimonials(limit = 10, featuredOnly = false) {
     if (!this.apiAvailable) {
-      console.log('⚠️ API not available, returning empty testimonials array')
-      return []
+      console.log('⚠️ API not available, trying to get community feedback as testimonials')
+      
+      // Try to get community feedback instead
+      try {
+        const communityFeedback = await this.getUserCommunityFeedback(this.currentUserId || 'fallback');
+        // Filter approved community feedback as testimonials
+        const approvedTestimonials = communityFeedback.filter(feedback => 
+          feedback.is_approved && feedback.rating && feedback.rating > 0
+        ).slice(0, limit);
+        
+        console.log('📊 Returning community feedback as testimonials:', approvedTestimonials.length);
+        return approvedTestimonials;
+      } catch (error) {
+        console.log('⚠️ Could not get community feedback, returning empty array');
+        return []
+      }
     }
 
     try {
@@ -1287,8 +1315,24 @@ class ApiService {
   }
 
   async getUserCommunityFeedback(userId) {
+    // Store user ID for potential use in getTestimonials fallback
+    this.currentUserId = userId;
+    
     if (!this.apiAvailable) {
-      console.log('⚠️ API not available, returning empty community feedback array')
+      console.log('⚠️ API not available, returning stored community feedback');
+      
+      // Return stored community feedback from localStorage if available
+      try {
+        const storedFeedback = localStorage.getItem(`community_feedback_${userId}`);
+        if (storedFeedback) {
+          const parsedFeedback = JSON.parse(storedFeedback);
+          console.log('📊 Retrieved stored community feedback:', parsedFeedback.length);
+          return parsedFeedback;
+        }
+      } catch (error) {
+        console.log('Could not retrieve stored feedback');
+      }
+      
       return []
     }
 
