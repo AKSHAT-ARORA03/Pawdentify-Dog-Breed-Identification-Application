@@ -32,15 +32,27 @@ app = FastAPI(
 
 # Get allowed origins from environment for production deployment
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+VERCEL_URL = os.getenv("VERCEL_URL", "https://pawdentify-dog-breed-identification.vercel.app")
+
 ALLOWED_ORIGINS = [
     FRONTEND_URL,
+    VERCEL_URL,
+    "https://pawdentify-dog-breed-identification.vercel.app",  # Your actual Vercel deployment
     "https://pawdentify.vercel.app",  # Your custom Vercel domain
-    "https://pawdentify-ai-powered-dog-breed-rec-coral.vercel.app",  # Actual Vercel deployment
-    "https://*.vercel.app",  # Vercel preview deployments
+    "https://pawdentify-ai-powered-dog-breed-rec-coral.vercel.app",  # Alternative Vercel deployment
     "http://localhost:5173",  # Local development
     "http://localhost:3000",  # Alternative local port
     "http://127.0.0.1:5173",  # Local development alternative
+    "http://127.0.0.1:8000",  # Backend testing
 ]
+
+# Add dynamic Vercel preview URLs if in production
+if os.getenv("ENVIRONMENT") == "production":
+    # Add any additional production URLs
+    additional_origins = os.getenv("ADDITIONAL_CORS_ORIGINS", "").split(",")
+    ALLOWED_ORIGINS.extend([origin.strip() for origin in additional_origins if origin.strip()])
+
+print(f"🌐 CORS allowed origins: {ALLOWED_ORIGINS}")
 
 # Production-ready CORS configuration
 app.add_middleware(
