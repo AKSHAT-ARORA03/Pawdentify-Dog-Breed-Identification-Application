@@ -100,6 +100,7 @@ export default function UserPreferences() {
       
       // Apply theme immediately when it changes
       if (category === 'theme' && applyTheme) {
+        console.log('🎨 Applying theme change:', value);
         applyTheme(value)
       }
     } else {
@@ -137,17 +138,7 @@ export default function UserPreferences() {
   const tabs = [
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy', icon: Shield },
-    { id: 'appearance', label: 'Appearance', icon: Palette },
-    { id: 'premium', label: 'Premium', icon: Crown }
-  ]
-
-  const premiumFeatures = [
-    { name: 'Unlimited Scans', description: 'No limits on daily scans' },
-    { name: 'Advanced Analytics', description: 'Detailed insights and trends' },
-    { name: 'Priority Support', description: '24/7 premium customer support' },
-    { name: 'Breed Comparison', description: 'Compare multiple breeds side-by-side' },
-    { name: 'Export Features', description: 'Download results in various formats' },
-    { name: 'Early Access', description: 'Beta features and new updates first' }
+    { id: 'appearance', label: 'Appearance', icon: Palette }
   ]
 
   if (loading) {
@@ -413,7 +404,14 @@ export default function UserPreferences() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
                     <select
                       value={preferences.theme}
-                      onChange={(e) => handlePreferenceChange('theme', null, e.target.value)}
+                      onChange={(e) => {
+                        const newTheme = e.target.value;
+                        handlePreferenceChange('theme', null, newTheme);
+                        // Apply theme immediately for instant visual feedback
+                        if (applyTheme) {
+                          applyTheme(newTheme);
+                        }
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500"
                     >
                       <option value="light">Light</option>
@@ -446,47 +444,6 @@ export default function UserPreferences() {
                       <option value="imperial">Imperial (lb, in)</option>
                       <option value="metric">Metric (kg, cm)</option>
                     </select>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'premium' && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="space-y-6"
-              >
-                <h3 className="text-xl font-semibold text-gray-900">Premium Features</h3>
-                
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <Crown className="h-8 w-8 text-yellow-600" />
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900">Pawdentify Premium</h4>
-                      <p className="text-sm text-gray-600">Unlock advanced features and unlimited scanning</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-4 mb-6">
-                    {premiumFeatures.map((feature, index) => (
-                      <div key={index} className="flex items-start space-x-2">
-                        <Check className="h-5 w-5 text-green-600 mt-0.5" />
-                        <div>
-                          <div className="font-medium text-gray-900">{feature.name}</div>
-                          <div className="text-sm text-gray-600">{feature.description}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold text-gray-900">
-                      $9.99 <span className="text-sm font-normal text-gray-600">/ month</span>
-                    </div>
-                    <button className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-semibold rounded-lg hover:shadow-lg transition-shadow">
-                      Upgrade to Premium
-                    </button>
                   </div>
                 </div>
               </motion.div>

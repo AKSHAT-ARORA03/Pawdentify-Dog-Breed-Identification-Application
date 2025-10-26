@@ -16,9 +16,17 @@ class ApiService {
   // Check if API is available
   async checkApiAvailability() {
     try {
-      const response = await fetch(`${this.baseUrl}/api/health`)
+      // Try both /api/health and /health endpoints
+      let response = await fetch(`${this.baseUrl}/api/health`)
+      if (!response.ok) {
+        response = await fetch(`${this.baseUrl}/health`)
+      }
       this.apiAvailable = response.ok
+      if (this.apiAvailable) {
+        console.log('✅ API is available and responding')
+      }
     } catch (error) {
+      console.log('❌ API availability check failed:', error.message)
       this.apiAvailable = false
     }
     return this.apiAvailable
@@ -843,6 +851,482 @@ class ApiService {
     if (recent > earlier * 1.1) return 'increasing'
     if (recent < earlier * 0.9) return 'decreasing'
     return 'stable'
+  }
+
+  /**
+   * User Management Operations
+   */
+  async createUserIfNotExists(clerkUserId, userData) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, skipping user creation')
+      return { message: 'API not available' }
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/users`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          clerk_user_id: clerkUserId,
+          email: userData.email,
+          username: userData.username,
+          first_name: userData.first_name,
+          last_name: userData.last_name
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to create user: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('👤 User creation result:', result)
+      return result
+    } catch (error) {
+      console.error('Error creating user:', error)
+      // Don't throw error - user might already exist
+      return { message: 'User creation failed but continuing...' }
+    }
+  }
+
+  /**
+   * Pet Management Operations
+   */
+  async createPet(petData, userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, using mock pet creation')
+      return { 
+        _id: `pet_${Date.now()}`, 
+        ...petData, 
+        user_id: userId,
+        created_at: new Date().toISOString()
+      }
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/pets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': userId
+        },
+        body: JSON.stringify(petData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to create pet: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error creating pet:', error)
+      throw error
+    }
+  }
+
+  async getUserPets(userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, returning empty pets array')
+      return []
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/pets`, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get pets: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting pets:', error)
+      return []
+    }
+  }
+
+  async updatePet(petId, updateData, userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, mock updating pet')
+      return true
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/pets/${petId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': userId
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      return response.ok
+    } catch (error) {
+      console.error('Error updating pet:', error)
+      return false
+    }
+  }
+
+  async deletePet(petId, userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, mock deleting pet')
+      return true
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/pets/${petId}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-ID': userId
+        }
+      })
+
+      return response.ok
+    } catch (error) {
+      console.error('Error deleting pet:', error)
+      return false
+    }
+  }
+
+  /**
+   * Vaccination Operations
+   */
+  async createVaccination(vaccinationData, userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, using mock vaccination creation')
+      return { 
+        _id: `vaccination_${Date.now()}`, 
+        ...vaccinationData, 
+        user_id: userId,
+        created_at: new Date().toISOString()
+      }
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/vaccinations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': userId
+        },
+        body: JSON.stringify(vaccinationData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to create vaccination: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error creating vaccination:', error)
+      throw error
+    }
+  }
+
+  async getVaccinations(userId, petId = null) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, returning empty vaccinations array')
+      return []
+    }
+
+    try {
+      const url = new URL(`${this.baseUrl}/api/vaccinations`)
+      if (petId) {
+        url.searchParams.append('pet_id', petId)
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get vaccinations: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting vaccinations:', error)
+      return []
+    }
+  }
+
+  async getUpcomingVaccinations(userId, daysAhead = 30) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, returning empty upcoming vaccinations')
+      return []
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/vaccinations/upcoming?days_ahead=${daysAhead}`, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get upcoming vaccinations: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting upcoming vaccinations:', error)
+      return []
+    }
+  }
+
+  async getOverdueVaccinations(userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, returning empty overdue vaccinations')
+      return []
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/vaccinations/overdue`, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get overdue vaccinations: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting overdue vaccinations:', error)
+      return []
+    }
+  }
+
+  async updateVaccinationStatus(vaccinationId, status, administeredDate = null, notes = null) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, mock updating vaccination status')
+      return true
+    }
+
+    try {
+      const payload = { status }
+      if (administeredDate) payload.administered_date = administeredDate
+      if (notes) payload.notes = notes
+
+      const response = await fetch(`${this.baseUrl}/api/vaccinations/${vaccinationId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+
+      return response.ok
+    } catch (error) {
+      console.error('Error updating vaccination status:', error)
+      return false
+    }
+  }
+
+  async getVaccinationStatistics(userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, returning mock vaccination statistics')
+      return {
+        completed: 0,
+        upcoming: 0,
+        overdue: 0,
+        scheduled: 0,
+        total: 0
+      }
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/vaccinations/statistics`, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get vaccination statistics: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting vaccination statistics:', error)
+      return { completed: 0, upcoming: 0, overdue: 0, scheduled: 0, total: 0 }
+    }
+  }
+
+  /**
+   * Feedback Operations
+   */
+  async submitFeedback(feedbackData, userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, using mock feedback submission')
+      return { 
+        _id: `feedback_${Date.now()}`, 
+        ...feedbackData, 
+        user_id: userId,
+        submitted_at: new Date().toISOString(),
+        status: 'pending'
+      }
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': userId
+        },
+        body: JSON.stringify(feedbackData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit feedback: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error submitting feedback:', error)
+      throw error
+    }
+  }
+
+  async getUserFeedback(userId, limit = 20, skip = 0) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, returning empty feedback array')
+      return []
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/feedback?limit=${limit}&skip=${skip}`, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get user feedback: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting user feedback:', error)
+      return []
+    }
+  }
+
+  /**
+   * Community Feedback Operations
+   */
+  async submitCommunityFeedback(feedbackData, userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, using mock community feedback submission')
+      return { 
+        _id: `community_feedback_${Date.now()}`, 
+        ...feedbackData, 
+        user_id: userId,
+        submitted_at: new Date().toISOString(),
+        is_approved: false
+      }
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/community-feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': userId
+        },
+        body: JSON.stringify(feedbackData)
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit community feedback: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error submitting community feedback:', error)
+      throw error
+    }
+  }
+
+  async getTestimonials(limit = 10, featuredOnly = false) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, returning empty testimonials array')
+      return []
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/community-feedback/testimonials?limit=${limit}&featured_only=${featuredOnly}`, {
+        method: 'GET'
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get testimonials: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting testimonials:', error)
+      return []
+    }
+  }
+
+  async getUserCommunityFeedback(userId) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, returning empty community feedback array')
+      return []
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/community-feedback/user`, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get user community feedback: ${response.statusText}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error getting user community feedback:', error)
+      return []
+    }
+  }
+
+  async voteOnFeedback(feedbackId, isHelpful) {
+    if (!this.apiAvailable) {
+      console.log('⚠️ API not available, mock voting on feedback')
+      return true
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/community-feedback/${feedbackId}/vote?is_helpful=${isHelpful}`, {
+        method: 'POST'
+      })
+
+      return response.ok
+    } catch (error) {
+      console.error('Error voting on feedback:', error)
+      return false
+    }
   }
 }
 

@@ -6,11 +6,15 @@ import Dashboard from './pages/Dashboard'
 import ScanPage from './pages/ScanPage'
 import ProfilePage from './pages/ProfilePage'
 import BreedCareGuides from './pages/BreedCareGuides'
+import VaccinationTracker from './pages/VaccinationTracker'
+import HelpSupport from './pages/HelpSupport'
+import FeedbackCenter from './pages/FeedbackCenter'
 import UserPreferences from './components/UserPreferences'
 import EnhancedAnalytics from './components/EnhancedAnalytics'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import LoadingSpinner from './components/LoadingSpinner'
+import FloatingQuickActionsMenu from './components/FloatingQuickActionsMenu'
 
 function AppRoutes() {
   const { isSignedIn, isLoaded } = useAuthContext()
@@ -50,9 +54,24 @@ function AppRoutes() {
               path="/care-guides" 
               element={isSignedIn ? <BreedCareGuides /> : <Navigate to="/" />} 
             />
+            <Route 
+              path="/vaccination" 
+              element={isSignedIn ? <VaccinationTracker /> : <Navigate to="/" />} 
+            />
+            <Route 
+              path="/help" 
+              element={isSignedIn ? <HelpSupport /> : <Navigate to="/" />} 
+            />
+            <Route 
+              path="/feedback" 
+              element={isSignedIn ? <FeedbackCenter /> : <Navigate to="/" />} 
+            />
           </Routes>
         </main>
         <Footer />
+        
+        {/* Floating Quick Actions Menu - Available on all pages */}
+        <FloatingQuickActionsMenu />
       </div>
     </Router>
   )

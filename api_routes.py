@@ -5,13 +5,17 @@ Extends the existing prediction API with database operations
 from fastapi import APIRouter, HTTPException, Depends, Header, Query
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from database.services import (
     UserService,
     ScanHistoryService,
     SearchHistoryService,
-    UserPreferencesService
+    UserPreferencesService,
+    PetService,
+    VaccinationService,
+    FeedbackService,
+    CommunityFeedbackService
 )
 from database.models import (
     User,
@@ -19,7 +23,14 @@ from database.models import (
     SearchHistory,
     UserPreferences,
     BreedPrediction,
-    DeviceType
+    DeviceType,
+    Pet,
+    VaccinationRecord,
+    UserFeedback,
+    CommunityFeedback,
+    VaccinationStatus,
+    FeedbackType,
+    FeedbackStatus
 )
 
 # Create API router
@@ -399,6 +410,7 @@ async def get_analytics_dashboard(
         breed_distribution = {}
         confidence_levels = []
         hourly_usage = [0] * 24
+        daily_accuracy = {}
         
         for scan in scan_history:
             # Daily aggregation
@@ -415,6 +427,14 @@ async def get_analytics_dashboard(
             # Hourly usage
             hour = scan['timestamp'].hour
             hourly_usage[hour] += 1
+            
+            # Daily accuracy calculation
+            if scan_date not in daily_accuracy:
+                daily_accuracy[scan_date] = {'total': 0, 'accurate': 0}
+            daily_accuracy[scan_date]['total'] += 1
+            # Use confidence score as proxy for accuracy (>0.8 considered accurate)
+            if scan['confidence_score'] > 0.8:
+                daily_accuracy[scan_date]['accurate'] += 1
         
         # Calculate accuracy (if feedback available)
         accuracy_rate = scan_stats.get('accuracy_rate', 0.0)
@@ -449,6 +469,13 @@ async def get_analytics_dashboard(
                 "hourly_usage": [
                     {"hour": hour, "scans": count}
                     for hour, count in enumerate(hourly_usage)
+                ],
+                "accuracy_trends": [
+                    {
+                        "date": date.isoformat(), 
+                        "accuracy": round((data['accurate'] / data['total']) * 100, 1) if data['total'] > 0 else 0
+                    }
+                    for date, data in sorted(daily_accuracy.items())
                 ]
             },
             "insights": {
@@ -904,5 +931,357 @@ async def submit_scan_feedback(feedback: UserFeedbackRequest):
             "feedback_id": f"fb_{int(feedback.timestamp.timestamp())}",
             "status": "received"
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== Pet Management Endpoints ====================
+class PetCreateRequest(BaseModel):
+    name: str
+    breed: str
+    secondary_breed: Optional[str] = None
+    age_years: Optional[int] = None
+    age_months: Optional[int] = None
+    weight_lbs: Optional[float] = None
+    color: Optional[str] = None
+    microchip_id: Optional[str] = None
+    veterinarian_name: Optional[str] = None
+    veterinarian_contact: Optional[str] = None
+    allergies: List[str] = []
+    medical_conditions: List[str] = []
+    special_notes: Optional[str] = None
+
+
+@router.post("/pets", response_model=dict)
+async def create_pet(
+    pet_data: PetCreateRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Create new pet profile"""
+    try:
+        pet_dict = pet_data.model_dump()
+        pet_dict["user_id"] = user_id
+        
+        pet = await PetService.create_pet(pet_dict)
+        return {
+            "message": "Pet created successfully",
+            "pet": pet
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/pets", response_model=List[dict])
+async def get_user_pets(user_id: str = Depends(get_current_user_id)):
+    """Get all pets for the current user"""
+    try:
+        pets = await PetService.get_user_pets(user_id)
+        return pets
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/pets/{pet_id}", response_model=dict)
+async def get_pet(pet_id: str):
+    """Get specific pet by ID"""
+    try:
+        pet = await PetService.get_pet_by_id(pet_id)
+        if not pet:
+            raise HTTPException(status_code=404, detail="Pet not found")
+        return pet
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/pets/{pet_id}", response_model=dict)
+async def update_pet(
+    pet_id: str,
+    update_data: dict,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Update pet information"""
+    try:
+        # Verify pet belongs to user
+        pet = await PetService.get_pet_by_id(pet_id)
+        if not pet or pet.get("user_id") != user_id:
+            raise HTTPException(status_code=404, detail="Pet not found")
+        
+        success = await PetService.update_pet(pet_id, update_data)
+        if success:
+            return {"message": "Pet updated successfully"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to update pet")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/pets/{pet_id}", response_model=dict)
+async def delete_pet(
+    pet_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Delete pet profile"""
+    try:
+        # Verify pet belongs to user
+        pet = await PetService.get_pet_by_id(pet_id)
+        if not pet or pet.get("user_id") != user_id:
+            raise HTTPException(status_code=404, detail="Pet not found")
+        
+        success = await PetService.delete_pet(pet_id)
+        if success:
+            return {"message": "Pet deleted successfully"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to delete pet")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== Vaccination Endpoints ====================
+class VaccinationCreateRequest(BaseModel):
+    pet_id: str
+    vaccine_name: str
+    vaccine_type: str
+    due_date: datetime
+    administered_date: Optional[datetime] = None
+    next_due_date: Optional[datetime] = None
+    status: VaccinationStatus = VaccinationStatus.UPCOMING
+    is_core_vaccine: bool = True
+    frequency_months: int = 12
+    veterinarian_name: Optional[str] = None
+    clinic_name: Optional[str] = None
+    clinic_contact: Optional[str] = None
+    notes: Optional[str] = None
+    manufacturer: Optional[str] = None
+    lot_number: Optional[str] = None
+
+
+@router.post("/vaccinations", response_model=dict)
+async def create_vaccination(
+    vaccination_data: VaccinationCreateRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Create new vaccination record"""
+    try:
+        # Verify pet belongs to user
+        pet = await PetService.get_pet_by_id(vaccination_data.pet_id)
+        if not pet or pet.get("user_id") != user_id:
+            raise HTTPException(status_code=404, detail="Pet not found")
+        
+        vaccination_dict = vaccination_data.model_dump()
+        vaccination_dict["user_id"] = user_id
+        
+        vaccination = await VaccinationService.create_vaccination(vaccination_dict)
+        return {
+            "message": "Vaccination record created successfully",
+            "vaccination": vaccination
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/vaccinations", response_model=List[dict])
+async def get_vaccinations(
+    pet_id: Optional[str] = Query(None),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get vaccination records for user's pets"""
+    try:
+        vaccinations = await VaccinationService.get_pet_vaccinations(user_id, pet_id)
+        return vaccinations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/vaccinations/upcoming", response_model=List[dict])
+async def get_upcoming_vaccinations(
+    days_ahead: int = Query(30, ge=1, le=365),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get upcoming vaccinations within specified days"""
+    try:
+        vaccinations = await VaccinationService.get_upcoming_vaccinations(user_id, days_ahead)
+        return vaccinations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/vaccinations/overdue", response_model=List[dict])
+async def get_overdue_vaccinations(user_id: str = Depends(get_current_user_id)):
+    """Get overdue vaccinations"""
+    try:
+        vaccinations = await VaccinationService.get_overdue_vaccinations(user_id)
+        return vaccinations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/vaccinations/{vaccination_id}/status", response_model=dict)
+async def update_vaccination_status(
+    vaccination_id: str,
+    status: VaccinationStatus,
+    administered_date: Optional[datetime] = None,
+    notes: Optional[str] = None
+):
+    """Update vaccination status"""
+    try:
+        success = await VaccinationService.update_vaccination_status(
+            vaccination_id, status.value, administered_date, notes
+        )
+        if success:
+            return {"message": "Vaccination status updated successfully"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to update vaccination")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/vaccinations/statistics", response_model=dict)
+async def get_vaccination_statistics(user_id: str = Depends(get_current_user_id)):
+    """Get vaccination statistics for user"""
+    try:
+        stats = await VaccinationService.get_vaccination_statistics(user_id)
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== Feedback Endpoints ====================
+class UserFeedbackCreateRequest(BaseModel):
+    feedback_type: FeedbackType
+    subject: str
+    message: str
+    app_version: Optional[str] = None
+    device_type: DeviceType = DeviceType.UNKNOWN
+    page_url: Optional[str] = None
+    scan_id: Optional[str] = None
+    predicted_breed: Optional[str] = None
+    corrected_breed: Optional[str] = None
+    confidence_score: Optional[float] = None
+    priority: str = "medium"
+    rating: Optional[int] = None
+    follow_up_requested: bool = False
+
+
+@router.post("/feedback", response_model=dict)
+async def create_feedback(
+    feedback_data: UserFeedbackCreateRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Submit user feedback"""
+    try:
+        feedback_dict = feedback_data.model_dump()
+        feedback_dict["user_id"] = user_id
+        
+        feedback = await FeedbackService.create_feedback(feedback_dict)
+        return {
+            "message": "Feedback submitted successfully",
+            "feedback": feedback
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/feedback", response_model=List[dict])
+async def get_user_feedback(
+    limit: int = Query(20, ge=1, le=100),
+    skip: int = Query(0, ge=0),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Get user's feedback history"""
+    try:
+        feedback_list = await FeedbackService.get_user_feedback(user_id, limit, skip)
+        return feedback_list
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/feedback/statistics", response_model=dict)
+async def get_feedback_statistics():
+    """Get overall feedback statistics (admin only)"""
+    try:
+        stats = await FeedbackService.get_feedback_statistics()
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== Community Feedback Endpoints ====================
+class CommunityFeedbackCreateRequest(BaseModel):
+    display_name: str
+    user_location: Optional[str] = None
+    title: str
+    content: str
+    rating: int = Field(..., ge=1, le=5)
+    usage_duration: Optional[str] = None
+    favorite_features: List[str] = []
+    scan_count: Optional[int] = None
+
+
+@router.post("/community-feedback", response_model=dict)
+async def create_community_feedback(
+    feedback_data: CommunityFeedbackCreateRequest,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Submit community feedback/testimonial"""
+    try:
+        feedback_dict = feedback_data.model_dump()
+        feedback_dict["user_id"] = user_id
+        
+        feedback = await CommunityFeedbackService.create_community_feedback(feedback_dict)
+        return {
+            "message": "Community feedback submitted successfully",
+            "feedback": feedback
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/community-feedback/testimonials", response_model=List[dict])
+async def get_testimonials(
+    limit: int = Query(10, ge=1, le=50),
+    featured_only: bool = Query(False)
+):
+    """Get approved testimonials for public display"""
+    try:
+        testimonials = await CommunityFeedbackService.get_approved_testimonials(limit, featured_only)
+        return testimonials
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/community-feedback/user", response_model=List[dict])
+async def get_user_community_feedback(user_id: str = Depends(get_current_user_id)):
+    """Get user's community feedback submissions"""
+    try:
+        feedback_list = await CommunityFeedbackService.get_user_community_feedback(user_id)
+        return feedback_list
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/community-feedback/{feedback_id}/vote", response_model=dict)
+async def vote_on_feedback(
+    feedback_id: str,
+    is_helpful: bool = Query(...)
+):
+    """Vote on community feedback"""
+    try:
+        success = await CommunityFeedbackService.vote_on_feedback(feedback_id, is_helpful)
+        if success:
+            return {"message": "Vote recorded successfully"}
+        else:
+            raise HTTPException(status_code=400, detail="Failed to record vote")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

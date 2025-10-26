@@ -16,6 +16,32 @@ class DeviceType(str, Enum):
     UNKNOWN = "unknown"
 
 
+class VaccinationStatus(str, Enum):
+    """Vaccination status types"""
+    COMPLETED = "completed"
+    OVERDUE = "overdue"
+    UPCOMING = "upcoming"
+    SCHEDULED = "scheduled"
+
+
+class FeedbackType(str, Enum):
+    """User feedback types"""
+    GENERAL = "general"
+    BUG_REPORT = "bug_report"
+    FEATURE_REQUEST = "feature_request"
+    BREED_CORRECTION = "breed_correction"
+    APP_REVIEW = "app_review"
+
+
+class FeedbackStatus(str, Enum):
+    """Feedback processing status"""
+    PENDING = "pending"
+    REVIEWED = "reviewed"
+    IN_PROGRESS = "in_progress"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
 # ==================== User Model ====================
 class User(BaseModel):
     """
@@ -199,5 +225,226 @@ class UserPreferences(BaseModel):
                     "save_scan_history": True,
                     "allow_analytics": True
                 }
+            }
+        }
+
+
+# ==================== Pet Model ====================
+class Pet(BaseModel):
+    """
+    Pet model for vaccination tracking and care management
+    """
+    user_id: str = Field(..., description="Reference to user's Clerk ID")
+    
+    # Basic pet information
+    name: str = Field(..., description="Pet's name")
+    breed: str = Field(..., description="Primary breed name")
+    secondary_breed: Optional[str] = Field(None, description="Secondary breed if mixed")
+    
+    # Physical characteristics
+    age_years: Optional[int] = Field(None, ge=0, le=30, description="Age in years")
+    age_months: Optional[int] = Field(None, ge=0, le=11, description="Additional months")
+    weight_lbs: Optional[float] = Field(None, gt=0, description="Weight in pounds")
+    color: Optional[str] = Field(None, description="Primary color/markings")
+    
+    # Medical information
+    microchip_id: Optional[str] = Field(None, description="Microchip identification")
+    veterinarian_name: Optional[str] = Field(None, description="Primary veterinarian")
+    veterinarian_contact: Optional[str] = Field(None, description="Vet contact information")
+    
+    # Special needs and notes
+    allergies: List[str] = Field(default_factory=list, description="Known allergies")
+    medical_conditions: List[str] = Field(default_factory=list, description="Ongoing medical conditions")
+    special_notes: Optional[str] = Field(None, description="Additional care notes")
+    
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = Field(default=True, description="Active pet profile")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "user_2abc123",
+                "name": "Buddy",
+                "breed": "Golden_retriever",
+                "age_years": 3,
+                "age_months": 6,
+                "weight_lbs": 65.5,
+                "color": "Golden",
+                "veterinarian_name": "Dr. Smith",
+                "allergies": ["chicken", "wheat"],
+                "medical_conditions": []
+            }
+        }
+
+
+# ==================== Vaccination Record Model ====================
+class VaccinationRecord(BaseModel):
+    """
+    Individual vaccination record for pets
+    """
+    user_id: str = Field(..., description="Reference to user's Clerk ID")
+    pet_id: str = Field(..., description="Reference to pet")
+    
+    # Vaccination details
+    vaccine_name: str = Field(..., description="Name of the vaccine (e.g., 'Rabies', 'DHPP')")
+    vaccine_type: str = Field(..., description="Type category (core, non-core, lifestyle)")
+    manufacturer: Optional[str] = Field(None, description="Vaccine manufacturer")
+    lot_number: Optional[str] = Field(None, description="Vaccine lot number")
+    
+    # Dates and scheduling
+    administered_date: Optional[datetime] = Field(None, description="Date vaccine was given")
+    due_date: datetime = Field(..., description="Date vaccine is due")
+    next_due_date: Optional[datetime] = Field(None, description="Next scheduled date")
+    
+    # Status and tracking
+    status: VaccinationStatus = Field(default=VaccinationStatus.UPCOMING)
+    is_core_vaccine: bool = Field(default=True, description="Required vs optional vaccine")
+    frequency_months: int = Field(default=12, description="How often vaccine is needed in months")
+    
+    # Administration details
+    veterinarian_name: Optional[str] = Field(None, description="Administering veterinarian")
+    clinic_name: Optional[str] = Field(None, description="Veterinary clinic")
+    clinic_contact: Optional[str] = Field(None, description="Clinic contact information")
+    
+    # Reaction and notes
+    adverse_reactions: Optional[str] = Field(None, description="Any adverse reactions noted")
+    notes: Optional[str] = Field(None, description="Additional notes")
+    
+    # Reminders
+    reminder_sent: bool = Field(default=False, description="Whether reminder has been sent")
+    reminder_date: Optional[datetime] = Field(None, description="When to send reminder")
+    
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "user_2abc123",
+                "pet_id": "pet_123",
+                "vaccine_name": "Rabies",
+                "vaccine_type": "core",
+                "administered_date": "2024-01-15T10:00:00Z",
+                "due_date": "2025-01-15T00:00:00Z",
+                "status": "completed",
+                "is_core_vaccine": True,
+                "frequency_months": 36,
+                "veterinarian_name": "Dr. Smith",
+                "clinic_name": "Happy Paws Veterinary"
+            }
+        }
+
+
+# ==================== User Feedback Model ====================
+class UserFeedback(BaseModel):
+    """
+    User feedback and support requests
+    """
+    user_id: str = Field(..., description="Reference to user's Clerk ID")
+    
+    # Feedback content
+    feedback_type: FeedbackType = Field(..., description="Type of feedback")
+    subject: str = Field(..., description="Feedback subject/title")
+    message: str = Field(..., description="Detailed feedback message")
+    
+    # Context information
+    app_version: Optional[str] = Field(None, description="App version when feedback was given")
+    device_type: DeviceType = Field(default=DeviceType.UNKNOWN)
+    page_url: Optional[str] = Field(None, description="Page where feedback was submitted")
+    scan_id: Optional[str] = Field(None, description="Related scan if applicable")
+    
+    # Breed correction specific
+    predicted_breed: Optional[str] = Field(None, description="Original breed prediction")
+    corrected_breed: Optional[str] = Field(None, description="User's correction")
+    confidence_score: Optional[float] = Field(None, description="Original prediction confidence")
+    
+    # Priority and categorization
+    priority: str = Field(default="medium", description="Priority level: low, medium, high, urgent")
+    category: Optional[str] = Field(None, description="Internal categorization")
+    tags: List[str] = Field(default_factory=list, description="Tags for organization")
+    
+    # Status tracking
+    status: FeedbackStatus = Field(default=FeedbackStatus.PENDING)
+    assigned_to: Optional[str] = Field(None, description="Staff member assigned")
+    resolution_notes: Optional[str] = Field(None, description="Internal resolution notes")
+    
+    # User satisfaction
+    rating: Optional[int] = Field(None, ge=1, le=5, description="User satisfaction rating 1-5")
+    follow_up_requested: bool = Field(default=False, description="User requested follow-up")
+    
+    # Timestamps
+    submitted_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    resolved_at: Optional[datetime] = Field(None, description="When feedback was resolved")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "user_2abc123",
+                "feedback_type": "breed_correction",
+                "subject": "Incorrect breed identification",
+                "message": "The app identified my dog as a Golden Retriever, but it's actually a Labrador Retriever mix.",
+                "predicted_breed": "Golden_retriever",
+                "corrected_breed": "Labrador_retriever",
+                "confidence_score": 0.89,
+                "priority": "medium",
+                "status": "pending",
+                "rating": 4
+            }
+        }
+
+
+# ==================== Community Feedback Model ====================
+class CommunityFeedback(BaseModel):
+    """
+    Community feedback and testimonials
+    """
+    user_id: str = Field(..., description="Reference to user's Clerk ID")
+    
+    # User information (for display)
+    display_name: str = Field(..., description="Name to display publicly")
+    user_location: Optional[str] = Field(None, description="General location (city, state)")
+    
+    # Feedback content
+    title: str = Field(..., description="Feedback title")
+    content: str = Field(..., description="Feedback content")
+    rating: int = Field(..., ge=1, le=5, description="Overall app rating 1-5")
+    
+    # Experience details
+    usage_duration: Optional[str] = Field(None, description="How long they've used the app")
+    favorite_features: List[str] = Field(default_factory=list, description="Features they love")
+    scan_count: Optional[int] = Field(None, description="Number of scans performed")
+    
+    # Moderation
+    is_approved: bool = Field(default=False, description="Approved for public display")
+    is_featured: bool = Field(default=False, description="Featured testimonial")
+    moderated_by: Optional[str] = Field(None, description="Staff member who moderated")
+    
+    # Engagement
+    helpful_votes: int = Field(default=0, description="Number of helpful votes")
+    total_votes: int = Field(default=0, description="Total votes received")
+    
+    # Metadata
+    submitted_at: datetime = Field(default_factory=datetime.utcnow)
+    approved_at: Optional[datetime] = Field(None, description="When feedback was approved")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "user_2abc123",
+                "display_name": "Sarah M.",
+                "user_location": "Denver, CO",
+                "title": "Amazing accuracy for identifying my rescue dog!",
+                "content": "I had no idea what breed my rescue dog was, and this app identified him perfectly as a Border Collie mix. The care guides have been incredibly helpful!",
+                "rating": 5,
+                "usage_duration": "6 months",
+                "favorite_features": ["breed_identification", "care_guides", "vaccination_tracker"],
+                "scan_count": 15,
+                "is_approved": True,
+                "helpful_votes": 12,
+                "total_votes": 14
             }
         }

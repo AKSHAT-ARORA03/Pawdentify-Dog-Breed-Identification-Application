@@ -161,10 +161,30 @@ user_uploads/
 model/*.keras
 model/*.h5
 model/*.pb
+final_model.keras
 
 # Documentation build
 docs/_build/
 docs/.doctrees/
+
+# Development and process documentation (exclude from repo)
+*_STATUS.md
+*_INSTRUCTIONS.md
+*_IMPLEMENTATION.md
+*_SUMMARY.md
+*_COMPLETE.md
+*_FEATURE.md
+*_SETUP.md
+AI_DRIVEN_*.md
+STATUS_REPORT.md
+PHASE_*.md
+MONGODB_SETUP.md
+LOCATION_SERVICES_FEATURE.md
+GOOGLE_DRIVE_INSTRUCTIONS.md
+GITHUB_RELEASE_INSTRUCTIONS.md
+FINAL_STATUS.md
+PROJECT_COMPLETION_SUMMARY.md
+AI_DRIVEN_IMAGE_SYSTEM_COMPLETE.md
 
 # Package files
 *.dmg

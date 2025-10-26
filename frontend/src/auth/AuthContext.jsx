@@ -136,19 +136,28 @@ function AuthContextProvider({ children, isSignedIn: fallbackIsSignedIn, isLoade
   const applyTheme = (theme) => {
     const root = document.documentElement
     
+    console.log('🔧 Applying theme:', theme);
+    console.log('🔧 Current HTML classes before:', root.className);
+    
     if (theme === 'dark') {
       root.classList.add('dark')
+      console.log('✅ Added dark class');
     } else if (theme === 'light') {
       root.classList.remove('dark')
+      console.log('✅ Removed dark class');
     } else if (theme === 'auto') {
       // Use system preference
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       if (isDark) {
         root.classList.add('dark')
+        console.log('✅ Added dark class (auto mode)');
       } else {
         root.classList.remove('dark')
+        console.log('✅ Removed dark class (auto mode)');
       }
     }
+    
+    console.log('🔧 Current HTML classes after:', root.className);
     
     // Store in localStorage for persistence
     localStorage.setItem('pawdentify_theme', theme)
