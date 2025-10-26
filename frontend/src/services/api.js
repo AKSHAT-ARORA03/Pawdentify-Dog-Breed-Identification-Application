@@ -1117,17 +1117,22 @@ class ApiService {
     }
 
     try {
-      const payload = { status }
-      if (administeredDate) payload.administered_date = administeredDate
-      if (notes) payload.notes = notes
+      // Build URL with query parameters instead of JSON body
+      const params = new URLSearchParams({ status })
+      if (administeredDate) params.append('administered_date', administeredDate)
+      if (notes) params.append('notes', notes)
 
-      const response = await fetch(`${this.baseUrl}/api/vaccinations/${vaccinationId}/status`, {
+      const response = await fetch(`${this.baseUrl}/api/vaccinations/${vaccinationId}/status?${params.toString()}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       })
+
+      if (!response.ok) {
+        console.error('Failed to update vaccination status:', response.status, response.statusText)
+        return false
+      }
 
       return response.ok
     } catch (error) {
