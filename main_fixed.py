@@ -39,7 +39,8 @@ ALLOWED_ORIGINS = [
     VERCEL_URL,
     "https://pawdentify-dog-breed-identification.vercel.app",  # Your actual Vercel deployment
     "https://pawdentify.vercel.app",  # Your custom Vercel domain
-    "https://pawdentify-ai-powered-dog-breed-rec-coral.vercel.app",  # Alternative Vercel deployment
+    "https://pawdentify-ai-powered-dog-breed-rec-coral.vercel.app",
+    "https://pawdentify-dog-breed-identification.vercel.app",# Alternative Vercel deployment
     "http://localhost:5173",  # Local development
     "http://localhost:3000",  # Alternative local port
     "http://127.0.0.1:5173",  # Local development alternative
